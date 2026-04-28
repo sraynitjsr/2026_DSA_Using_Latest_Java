@@ -9,5 +9,9 @@ public class MyMain {
         
         TwoSumDemo.executeDemo();
         TwoSumDemo.demonstrateFunctionalApproach();
+        
+        System.out.println("\n" + "=".repeat(60) + "\n");
+        
+        GroupAnagramsDemo.executeDemo();
     }
 }
