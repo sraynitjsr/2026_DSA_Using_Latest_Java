@@ -13,5 +13,9 @@ public class MyMain {
         System.out.println("\n" + "=".repeat(60) + "\n");
         
         GroupAnagramsDemo.executeDemo();
+
+        System.out.println("\n" + "=".repeat(60) + "\n");
+        
+        ContainsNearbyAlmostDuplicate().Start();
     }
 }
