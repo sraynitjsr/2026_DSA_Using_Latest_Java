@@ -138,7 +138,7 @@ public class MyGetCharsDemo {
             return internal; 
         }
         
-        // Note: getChars() is inherited as a default method from CharSequence (JDK 25)
+        // Note: getChars() is inherited as a default method from CharSequence (Open JDK 25)
         // No need to override unless you want optimized behavior
     }
 }
