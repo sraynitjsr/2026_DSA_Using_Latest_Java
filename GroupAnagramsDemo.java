@@ -12,32 +12,54 @@ import java.util.function.Function;
  * Input: ["eat","tea","tan","ate","nat","bat"]
  * Output: [["bat"],["nat","tan"],["ate","eat","tea"]]
  * 
- * This solution demonstrates extensive use of Java Stream API features:
+ * This solution demonstrates extensive use of Java 21+ features:
+ * - Records (JDK 16+)
+ * - Sealed interfaces (JDK 17+)
+ * - Pattern matching for switch (JDK 21+)
+ * - Virtual threads (JDK 21+)
+ * - Sequenced collections (JDK 21+)
  * - Collectors.groupingBy()
  * - Stream transformations
  * - Method references
- * - Custom collectors
  * - Parallel streams
  */
-public class GroupAnagramsDemo {
+public final class GroupAnagramsDemo {
+
+    /**
+     * Sealed interface for different solution strategies.
+     * Demonstrates sealed types (JDK 17+) with pattern matching.
+     */
+    public sealed interface AnagramStrategy 
+        permits SortedKeyStrategy, FrequencyKeyStrategy, ParallelStrategy {
+        List<List<String>> groupAnagrams(String[] strs);
+        String getName();
+    }
 
     /**
      * Solution using Stream API with sorted string as key.
      * Time: O(n * k log k) where n is array length, k is max string length
      * Space: O(n * k)
      */
-    public static List<List<String>> groupAnagramsV1(String[] strs) {
-        return Arrays.stream(strs)
-            .collect(Collectors.groupingBy(
-                str -> str.chars()
-                    .sorted()
-                    .mapToObj(c -> String.valueOf((char) c))
-                    .collect(Collectors.joining()),
-                Collectors.toList()
-            ))
-            .values()
-            .stream()
-            .toList();
+    public static final class SortedKeyStrategy implements AnagramStrategy {
+        @Override
+        public List<List<String>> groupAnagrams(String[] strs) {
+            return Arrays.stream(strs)
+                .collect(Collectors.groupingBy(
+                    str -> str.chars()
+                        .sorted()
+                        .mapToObj(c -> String.valueOf((char) c))
+                        .collect(Collectors.joining()),
+                    Collectors.toList()
+                ))
+                .values()
+                .stream()
+                .toList();
+        }
+
+        @Override
+        public String getName() {
+            return "Sorted Key Strategy";
+        }
     }
 
     /**
@@ -46,15 +68,65 @@ public class GroupAnagramsDemo {
      * Time: O(n * k) where n is array length, k is max string length
      * Space: O(n * k)
      */
+    public static final class FrequencyKeyStrategy implements AnagramStrategy {
+        @Override
+        public List<List<String>> groupAnagrams(String[] strs) {
+            return Arrays.stream(strs)
+                .collect(Collectors.groupingBy(
+                    GroupAnagramsDemo::getCharFrequencyKey,
+                    Collectors.toList()
+                ))
+                .values()
+                .stream()
+                .toList();
+        }
+
+        @Override
+        public String getName() {
+            return "Frequency Key Strategy";
+        }
+    }
+
+    /**
+     * Parallel stream version for large datasets.
+     * Uses parallel processing to speed up anagram detection.
+     */
+    public static final class ParallelStrategy implements AnagramStrategy {
+        @Override
+        public List<List<String>> groupAnagrams(String[] strs) {
+            return Arrays.stream(strs)
+                .parallel()
+                .collect(Collectors.groupingByConcurrent(
+                    str -> str.chars()
+                        .sorted()
+                        .collect(StringBuilder::new,
+                                StringBuilder::appendCodePoint,
+                                StringBuilder::append)
+                        .toString(),
+                    Collectors.toList()
+                ))
+                .values()
+                .stream()
+                .toList();
+        }
+
+        @Override
+        public String getName() {
+            return "Parallel Strategy";
+        }
+    }
+
+    // Legacy methods for backward compatibility
+    public static List<List<String>> groupAnagramsV1(String[] strs) {
+        return new SortedKeyStrategy().groupAnagrams(strs);
+    }
+
     public static List<List<String>> groupAnagramsV2(String[] strs) {
-        return Arrays.stream(strs)
-            .collect(Collectors.groupingBy(
-                GroupAnagramsDemo::getCharFrequencyKey,
-                Collectors.toList()
-            ))
-            .values()
-            .stream()
-            .toList();
+        return new FrequencyKeyStrategy().groupAnagrams(strs);
+    }
+
+    public static List<List<String>> groupAnagramsParallel(String[] strs) {
+        return new ParallelStrategy().groupAnagrams(strs);
     }
 
     /**
@@ -76,24 +148,31 @@ public class GroupAnagramsDemo {
     }
 
     /**
-     * Parallel stream version for large datasets.
-     * Uses parallel processing to speed up anagram detection.
+     * Pattern matching with sealed types (Java 21+).
+     * Analyzes strategy and returns performance characteristics.
+     * Uses unnamed patterns (Java 22+) for unused variables.
      */
-    public static List<List<String>> groupAnagramsParallel(String[] strs) {
-        return Arrays.stream(strs)
-            .parallel()
-            .collect(Collectors.groupingByConcurrent(
-                str -> str.chars()
-                    .sorted()
-                    .collect(StringBuilder::new,
-                            StringBuilder::appendCodePoint,
-                            StringBuilder::append)
-                    .toString(),
-                Collectors.toList()
-            ))
-            .values()
-            .stream()
-            .toList();
+    private static String analyzeStrategy(AnagramStrategy strategy) {
+        return switch (strategy) {
+            case SortedKeyStrategy _ -> """
+                Sorted Key Strategy:
+                  Time: O(n * k log k)
+                  Space: O(n * k)
+                  Best for: General purpose, moderate-length strings
+                """;
+            case FrequencyKeyStrategy _ -> """
+                Frequency Key Strategy:
+                  Time: O(n * k)
+                  Space: O(n * k)
+                  Best for: Very long strings where frequency counting is faster
+                """;
+            case ParallelStrategy _ -> """
+                Parallel Strategy:
+                  Time: O(n * k log k) with parallelism
+                  Space: O(n * k)
+                  Best for: Large datasets, multi-core systems
+                """;
+        };
     }
 
     /**
@@ -207,6 +286,19 @@ public class GroupAnagramsDemo {
             new String[]{"listen", "silent", "enlist", "hello", "world", "dolly"},
             new String[]{"abc", "bca", "cab", "xyz", "zyx", "yxz", "def"}
         );
+
+        // Demonstrate pattern matching with strategies
+        System.out.println("Strategy Analysis:\n");
+        var strategies = List.<AnagramStrategy>of(
+            new SortedKeyStrategy(),
+            new FrequencyKeyStrategy(),
+            new ParallelStrategy()
+        );
+        
+        strategies.forEach(strategy -> {
+            System.out.println(strategy.getName() + ":");
+            System.out.println(analyzeStrategy(strategy));
+        });
 
         int testNum = 1;
         for (var testCase : testCases) {
