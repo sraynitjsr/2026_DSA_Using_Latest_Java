@@ -4,8 +4,8 @@ import java.util.stream.IntStream;
 
 /**
  * Demonstrates solving the classic Two Sum problem using modern Java features.
- * Features used: Records (JDK 14+), Pattern Matching (JDK 21+), 
- * Stream API, var keyword (JDK 10+), and text blocks (JDK 15+).
+ * Features used: Records (JDK 14+), Pattern Matching (Open JDK 21+), 
+ * Stream API, var keyword (JDK 10+), and text blocks (Open JDK 15+).
  */
 public class TwoSumDemo {
 
