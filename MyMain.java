@@ -46,7 +46,8 @@ public final class MyMain {
             new DemoTask("Remove K Digits Demo", MyRemoveKdigits::executeDemo),
             new DemoTask("Contains Nearby Almost Duplicate", () -> {
                 new ContainsNearbyAlmostDuplicate().start();
-            })
+            }),
+            new DemoTask("Odd-Even Two Threads Demo", MyOddEvenTwoThreads::executeDemo)
         );
 
         // Execute each demo with timing information
@@ -97,6 +98,7 @@ public final class MyMain {
             futures.add(executor.submit(GroupAnagramsDemo::executeDemo));
             futures.add(executor.submit(MyRemoveKdigits::executeDemo));
             futures.add(executor.submit(() -> new ContainsNearbyAlmostDuplicate().start()));
+            futures.add(executor.submit(MyOddEvenTwoThreads::executeDemo));
 
             // Wait for all tasks to complete
             futures.forEach(future -> {
